@@ -43,4 +43,30 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run tests
-        run: pytest -v
+        run: pytest -v --cov=app --cov-report=term-missing --junitxml=test-results-${{ matrix.python-version }}.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: test-results-${{ matrix.python-version }}.xml
+
+  security:
+    needs: test
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install pip-audit
+        run: pip install pip-audit==2.7.3
+
+      - name: Run pip-audit
+        run: pip-audit -r requirements.txt
